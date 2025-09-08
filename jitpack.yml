@@ -1,0 +1,18 @@
+# JitPack configuration for Gowit SDK
+# This file tells JitPack how to build your library
+
+# Use JDK 17 (required by Android Gradle Plugin)
+jdk:
+  - openjdk17
+
+# Before build script - ensure we have the right tools
+before_install:
+  - ./gradlew --version
+
+# Install dependencies and build
+install:
+  - ./gradlew clean build publishToMavenLocal
+
+# Environment variables (if needed)
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"

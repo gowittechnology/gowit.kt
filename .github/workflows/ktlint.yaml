@@ -1,0 +1,36 @@
+name: ktlint
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+jobs:
+  ktlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run ktlint check
+        run: ./gradlew --no-daemon ktlintCheck
+
+      - name: Upload ktlint reports (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ktlint-reports
+          path: |
+            **/build/reports/ktlint/
+            **/build/ktlint-reports/
+          if-no-files-found: ignore
