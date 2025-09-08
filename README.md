@@ -20,7 +20,7 @@ Add the dependency to your app's `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.github.gowittechnology:gowit-kt:1.0.0")
+    implementation("com.github.gowittechnology:gowit.kt:1.0.0")
 }
 ```
 
@@ -552,7 +552,7 @@ Model for providing customer context to improve ad targeting.
 ## Support
 
 For technical support and documentation:
-- GitHub Issues: [Report Issues](https://github.com/gowittechnology/gowit-kt/issues)
+- GitHub Issues: [Report Issues](https://github.com/gowittechnology/gowit.kt/issues)
 - Documentation: [Official Documentation](https://docs.gowit.com)
 - Contact: support@gowit.com
 

@@ -91,7 +91,7 @@ publishing {
     publications {
         release(MavenPublication) {
             groupId = 'com.github.gowittechnology'
-            artifactId = 'gowit-kt'
+            artifactId = 'gowit.kt'
             version = android.defaultConfig.versionName ?: '1.0.0'
 
             afterEvaluate {
@@ -101,7 +101,7 @@ publishing {
             pom {
                 name = 'Gowit SDK'
                 description = 'Android SDK for Gowit advertising platform'
-                url = 'https://github.com/gowittechnology/gowit-kt'
+                url = 'https://github.com/gowittechnology/gowit.kt'
                 
                 licenses {
                     license {
@@ -119,9 +119,9 @@ publishing {
                 }
                 
                 scm {
-                    connection = 'scm:git:git://github.com/gowittechnology/gowit-kt.git'
-                    developerConnection = 'scm:git:ssh://github.com/gowittechnology/gowit-kt.git'
-                    url = 'https://github.com/gowittechnology/gowit-kt'
+                    connection = 'scm:git:git://github.com/gowittechnology/gowit.kt.git'
+                    developerConnection = 'scm:git:ssh://github.com/gowittechnology/gowit.kt.git'
+                    url = 'https://github.com/gowittechnology/gowit.kt'
                 }
             }
         }
