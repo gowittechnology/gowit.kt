@@ -109,7 +109,6 @@ internal class EventsService(
         sendSdkEvent(EventType.IMPRESSION, sessionId, adId, null, callback)
     }
 
-
     /**
      * Queue event for background retry using WorkManager
      */
