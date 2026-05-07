@@ -164,16 +164,9 @@ class GowitSdk private constructor(
         sessionId: String,
     ) {
         ensureConfigured()
+        if (autoImpressionEnabled) return
 
-        val request =
-            EventRequest(
-                marketplaceId = marketplaceId,
-                eventType = EventType.IMPRESSION,
-                sessionId = sessionId,
-                adId = adId,
-            )
-
-        when (val result = eventsService.sendEvent(request)) {
+        when (val result = eventsService.sendSdkEventSuspend(EventType.IMPRESSION, sessionId, adId, null)) {
             is ApiResult.Success -> { /* Success */ }
             is ApiResult.Error -> throw result.exception
         }
@@ -187,16 +180,9 @@ class GowitSdk private constructor(
         sessionId: String,
     ) {
         ensureConfigured()
+        if (autoImpressionEnabled) return
 
-        val request =
-            EventRequest(
-                marketplaceId = marketplaceId,
-                eventType = EventType.VIEWABLE_IMPRESSION,
-                sessionId = sessionId,
-                adId = adId,
-            )
-
-        when (val result = eventsService.sendEvent(request)) {
+        when (val result = eventsService.sendSdkEventSuspend(EventType.VIEWABLE_IMPRESSION, sessionId, adId, null)) {
             is ApiResult.Success -> { /* Success */ }
             is ApiResult.Error -> throw result.exception
         }
@@ -211,15 +197,7 @@ class GowitSdk private constructor(
     ) {
         ensureConfigured()
 
-        val request =
-            EventRequest(
-                marketplaceId = marketplaceId,
-                eventType = EventType.CLICK,
-                sessionId = sessionId,
-                adId = adId,
-            )
-
-        when (val result = eventsService.sendEvent(request)) {
+        when (val result = eventsService.sendSdkEventSuspend(EventType.CLICK, sessionId, adId, null)) {
             is ApiResult.Success -> { /* Success */ }
             is ApiResult.Error -> throw result.exception
         }
@@ -242,7 +220,7 @@ class GowitSdk private constructor(
                 sales = sales,
             )
 
-        when (val result = eventsService.sendEvent(request)) {
+        when (val result = eventsService.sendSaleEventSuspend(request)) {
             is ApiResult.Success -> { /* Success */ }
             is ApiResult.Error -> throw result.exception
         }

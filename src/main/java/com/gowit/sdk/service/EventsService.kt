@@ -110,57 +110,6 @@ internal class EventsService(
     }
 
     /**
-     * Send custom event
-     */
-    fun sendEvent(
-        request: EventRequest,
-        callback: EventCallback? = null,
-    ) {
-        serviceScope.launch {
-            try {
-                val result = sendEvent(request)
-                result.onSuccess {
-                    callback?.onSuccess()
-                }.onError { exception ->
-                    // If immediate sending fails, queue for background retry
-                    queueEventForRetry(request)
-                    callback?.onError(exception)
-                }
-            } catch (e: Exception) {
-                Logger.e("Error in sendEvent callback", e)
-                queueEventForRetry(request)
-                callback?.onError(
-                    GowitException.NetworkException("Unexpected error occurred", e),
-                )
-            }
-        }
-    }
-
-    /**
-     * Send event immediately (suspending function)
-     */
-    suspend fun sendEvent(request: EventRequest): ApiResult<Unit> {
-        return try {
-            validateEventRequest(request)
-
-            val requestJson = JsonSerializer.toJson(request)
-            Logger.d("Event request: $requestJson")
-
-            val result = httpClient.post(ApiConstants.EVENTS_ENDPOINT, requestJson)
-
-            result.map {
-                Logger.d("Event sent successfully")
-                Unit
-            }
-        } catch (e: GowitException) {
-            ApiResult.Error(e)
-        } catch (e: Exception) {
-            Logger.e("Unexpected error in sendEvent", e)
-            ApiResult.Error(GowitException.NetworkException("Unexpected error occurred", e))
-        }
-    }
-
-    /**
      * Queue event for background retry using WorkManager
      */
     private fun queueEventForRetry(request: EventRequest) {
@@ -223,7 +172,7 @@ internal class EventsService(
     /**
      * Send event via SDK GET endpoint (suspending function)
      */
-    private suspend fun sendSdkEventSuspend(
+    internal suspend fun sendSdkEventSuspend(
         eventType: EventType,
         sessionId: String,
         adId: String,
@@ -280,7 +229,7 @@ internal class EventsService(
     /**
      * Send sale event via SDK POST endpoint (suspending function)
      */
-    private suspend fun sendSaleEventSuspend(request: EventRequest): ApiResult<Unit> {
+    internal suspend fun sendSaleEventSuspend(request: EventRequest): ApiResult<Unit> {
         return try {
             validateEventRequest(request)
 
