@@ -223,7 +223,7 @@ internal class EventsService(
     /**
      * Send event via SDK GET endpoint (suspending function)
      */
-    private suspend fun sendSdkEventSuspend(
+    internal suspend fun sendSdkEventSuspend(
         eventType: EventType,
         sessionId: String,
         adId: String,
@@ -280,7 +280,7 @@ internal class EventsService(
     /**
      * Send sale event via SDK POST endpoint (suspending function)
      */
-    private suspend fun sendSaleEventSuspend(request: EventRequest): ApiResult<Unit> {
+    internal suspend fun sendSaleEventSuspend(request: EventRequest): ApiResult<Unit> {
         return try {
             validateEventRequest(request)
 

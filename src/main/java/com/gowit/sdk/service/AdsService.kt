@@ -53,10 +53,7 @@ internal class AdsService(private val config: GowitConfig) {
         return try {
             validateRequest(request)
 
-            // Automatically add marketplace ID from config
-            val finalRequest = prepareRequestWithMarketplaceId(request)
-
-            val requestJson = JsonSerializer.toJson(finalRequest)
+            val requestJson = JsonSerializer.toJson(request)
             Logger.d("Ads request: $requestJson")
 
             val result = httpClient.post(ApiConstants.ADS_ENDPOINT, requestJson)
@@ -99,10 +96,5 @@ internal class AdsService(private val config: GowitConfig) {
                 throw GowitException.ValidationException("Placement ID must be greater than 0")
             }
         }
-    }
-
-    private fun prepareRequestWithMarketplaceId(request: AdRequest): AdRequest {
-        // Request already has marketplace ID as string, no conversion needed
-        return request
     }
 }
