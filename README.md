@@ -20,7 +20,7 @@ Add the dependency to your app's `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.github.gowittechnology:gowit.kt:1.0.0")
+    implementation("com.github.gowittechnology:gowit.kt:1.0.3")
 }
 ```
 
