@@ -54,7 +54,7 @@ internal class EventWorker(
 
             Logger.d("Retrying event request in background: ${eventRequest.eventType}")
 
-            when (val result = httpClient.post("/server/events", eventJson)) {
+            when (val result = httpClient.post("/server/sdk/events", eventJson)) {
                 is ApiResult.Success -> {
                     Logger.d("Background event retry successful")
                     Result.success()
