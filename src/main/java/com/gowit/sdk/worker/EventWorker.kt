@@ -22,6 +22,7 @@ internal class EventWorker(
         const val KEY_HOSTNAME = "hostname"
         const val KEY_MARKETPLACE_ID = "marketplace_id"
         const val KEY_ENABLE_LOGGING = "enable_logging"
+        const val KEY_ENDPOINT = "endpoint"
     }
 
     override suspend fun doWork(): Result {
@@ -49,12 +50,16 @@ internal class EventWorker(
 
             Logger.enable(enableLogging)
 
+            val endpoint =
+                inputData.getString(KEY_ENDPOINT)
+                    ?: return Result.failure()
+
             val eventRequest = JsonSerializer.fromJson<EventRequest>(eventJson)
             val httpClient = HttpClient(config)
 
             Logger.d("Retrying event request in background: ${eventRequest.eventType}")
 
-            when (val result = httpClient.post("/server/events", eventJson)) {
+            when (val result = httpClient.post(endpoint, eventJson)) {
                 is ApiResult.Success -> {
                     Logger.d("Background event retry successful")
                     Result.success()
