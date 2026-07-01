@@ -184,6 +184,7 @@ internal class EventsService(
             params["type"] = eventType.value
             params["session_id"] = sessionId
             params["ad_id"] = adId
+            params["no_redirect"] = "1"
             redirectUrl?.let { params["redirect"] = it }
 
             val result = httpClient.get(ApiConstants.EVENTS_ENDPOINT, params)
