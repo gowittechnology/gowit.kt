@@ -120,6 +120,7 @@ internal class EventsService(
                     .putString(EventWorker.KEY_HOSTNAME, config.hostname)
                     .putString(EventWorker.KEY_MARKETPLACE_ID, config.marketplaceId)
                     .putBoolean(EventWorker.KEY_ENABLE_LOGGING, config.enableLogging)
+                    .putString(EventWorker.KEY_ENDPOINT, ApiConstants.SALE_EVENTS_ENDPOINT)
                     .build()
 
             val constraints =
