@@ -40,6 +40,7 @@ data class AdRequest(
         private var pageNumber: Int? = null
         private var locationId: String? = null
         private var regionId: String? = null
+        private var language: String? = null
 
         fun placements(placements: List<PlacementRequest>) = apply { this.placements = placements }
 
@@ -65,6 +66,8 @@ data class AdRequest(
 
         fun regionId(regionId: String) = apply { this.regionId = regionId }
 
+        fun language(language: String) = apply { this.language = language }
+
         fun build(): AdRequest {
             require(sessionId.isNotBlank()) { "Session ID must be provided" }
             require(placements.isNotEmpty()) { "At least one placement must be provided" }
@@ -84,7 +87,7 @@ data class AdRequest(
                 pageNumber = pageNumber,
                 locationId = locationId,
                 regionId = regionId,
-                language = null,
+                language = language,
             )
         }
     }

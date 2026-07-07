@@ -32,17 +32,27 @@ data class PromotedProduct(
 @Parcelize
 data class Ad(
     val adId: String? = null,
+    val productId: String? = null,
     val creativeId: Int? = null,
     val imgUrl: String? = null,
+    val videoUrl: String? = null,
+    val vastTag: String? = null,
+    val duration: Int? = null,
+    val size: String? = null,
     val redirect: Redirect? = null,
     val position: Int? = null,
     val advertiserId: String? = null,
     val campaignId: Long? = null,
+    val products: List<PromotedProduct>? = null,
+    val language: String? = null,
     val html: String? = null,
-    val width: Long? = null,
-    val height: Long? = null,
 ) : Parcelable {
-    // MARK: - Ad Type Detection Methods
+    /**
+     * Determines if this ad is a Sponsored Product ad.
+     * A product ad contains a product_id (SKU) that customers can use to query product details.
+     */
+    val isProductAd: Boolean
+        get() = !productId.isNullOrBlank()
 
     /**
      * Determines if this ad is a Sponsored Display ad.
@@ -50,6 +60,12 @@ data class Ad(
      */
     val isDisplayAd: Boolean
         get() = !imgUrl.isNullOrBlank() || !html.isNullOrBlank() || redirect != null
+
+    /**
+     * Returns the SKU (product ID) if this is a product ad.
+     */
+    val sku: String?
+        get() = if (isProductAd) productId else null
 
     /**
      * Returns the display URL for this ad if it's a display ad.

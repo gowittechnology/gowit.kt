@@ -146,6 +146,7 @@ class GowitSdk private constructor(
                 pageNumber = builder.pageNumber,
                 locationId = builder.locationId,
                 regionId = builder.regionId,
+                language = builder.language,
             )
 
         return when (val result = adsService.getAds(request)) {

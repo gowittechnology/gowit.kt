@@ -29,6 +29,7 @@ data class AdRequestBuilder(
     val filters: List<String>? = null,
     val locationId: String? = null,
     val regionId: String? = null,
+    val language: String? = null,
 ) : Parcelable {
     constructor(placements: List<PlacementRequest>) : this(
         placements = placements,
@@ -43,6 +44,7 @@ data class AdRequestBuilder(
         filters = null,
         locationId = null,
         regionId = null,
+        language = null,
     )
 
     constructor(placementId: Int) : this(
@@ -70,4 +72,6 @@ data class AdRequestBuilder(
     fun withLocationId(locationId: String): AdRequestBuilder = copy(locationId = locationId)
 
     fun withRegionId(regionId: String): AdRequestBuilder = copy(regionId = regionId)
+
+    fun withLanguage(language: String): AdRequestBuilder = copy(language = language)
 }
