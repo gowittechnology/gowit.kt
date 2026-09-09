@@ -1,0 +1,25 @@
+{
+  "response_id": "fixture-response-0001",
+  "placements": [
+    {
+      "placement_id": 1,
+      "placement_identifier": "home_banner",
+      "ads": [
+        {
+          "ad_id": "fixture-ad-0001",
+          "creative_id": 90001,
+          "img_url": "https://cdn.example.invalid/creative/kettle.png",
+          "redirect": {
+            "url": "https://shop.example.invalid/p/kettle",
+            "type": "url"
+          },
+          "position": 1,
+          "advertiser_id": "advertiser-1",
+          "campaign_id": 4242,
+          "width": 1200,
+          "height": 628
+        }
+      ]
+    }
+  ]
+}
