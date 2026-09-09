@@ -30,6 +30,11 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+
+        // The renderer capability manifest reports the client build it was compiled from. AGP 8 no
+        // longer puts VERSION_NAME in a library's BuildConfig, so it is declared here from the one
+        // versionName above rather than duplicated as a Kotlin literal that could drift from it.
+        buildConfigField 'String', 'SDK_VERSION_NAME', "\"${versionName}\""
     }
 
     buildTypes {

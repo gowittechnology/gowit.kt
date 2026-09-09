@@ -10,3 +10,10 @@
 -keepclassmembers class com.gowit.sdk.model.** {
     *;
 }
+
+# Keep the renderer capability manifest. It is serialised by Gson in the consumer's app, and unlike
+# com.gowit.sdk.model it was not covered by any rule above.
+-keep public class com.gowit.sdk.capability.** { *; }
+-keepclassmembers class com.gowit.sdk.capability.** {
+    *;
+}
