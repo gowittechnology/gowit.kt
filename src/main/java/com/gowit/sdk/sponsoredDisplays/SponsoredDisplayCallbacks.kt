@@ -41,3 +41,12 @@ data class SponsoredDisplayCallbacks(
  * Click handler for sponsored display interactions
  */
 typealias SponsoredDisplayClickHandler = (adId: String, advertiserId: String) -> Unit
+
+/**
+ * Click interceptor for sponsored display interactions.
+ *
+ * Called after the click event is recorded, with the tapped ad and its destination URL (if any).
+ * Return `true` when the app handled navigation itself (e.g. opened an in-app screen);
+ * return `false` to let the SDK open [destinationUrl] with an `ACTION_VIEW` intent.
+ */
+typealias SponsoredDisplayClickInterceptor = (ad: Ad, destinationUrl: String?) -> Boolean

@@ -17,6 +17,8 @@ import com.gowit.sdk.GowitSdk
 import com.gowit.sdk.core.GowitException
 import com.gowit.sdk.core.Logger
 import com.gowit.sdk.model.Ad
+import com.gowit.sdk.model.AdContext
+import com.gowit.sdk.model.Customer
 import com.gowit.sdk.model.PlacementRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +64,9 @@ class SponsoredDisplayView
         private var isSetup = false
         private var callbacks: SponsoredDisplayCallbacks? = null
         private var clickHandler: SponsoredDisplayClickHandler? = null
+        private var clickInterceptor: SponsoredDisplayClickInterceptor? = null
+        private var placement: PlacementRequest? = null
+        private var adContext: AdContext? = null
         private val viewScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
         init {
@@ -101,13 +106,23 @@ class SponsoredDisplayView
         }
 
         /**
-         * Setup the sponsored display view with configuration
+         * Setup the sponsored display view for a placement.
+         *
+         * @param placement Placement to fill, with optional placement filters and max ads.
+         * @param adContext Request context (customer, language, location, region, page context...).
+         *   Merged over `Gowit.shared.defaultContext`; the customer is merged field by field.
+         * @param sessionId Session used for the request and the view's events. Falls back to
+         *   [adContext], then the default context, then a generated ID.
+         * @param onClick Notified on every tap (analytics).
+         * @param onAdClick Return `true` to handle navigation in the app; `false` lets the SDK
+         *   open the destination URL.
          */
         suspend fun setup(
-            sponsoredDisplayConfig: SponsoredDisplayConfig,
-            customerId: String? = null,
+            placement: PlacementRequest,
+            adContext: AdContext? = null,
             sessionId: String? = null,
             onClick: SponsoredDisplayClickHandler? = null,
+            onAdClick: SponsoredDisplayClickInterceptor? = null,
             callbacks: SponsoredDisplayCallbacks? = null,
         ) {
             if (isSetup) {
@@ -117,27 +132,82 @@ class SponsoredDisplayView
 
             this.callbacks = callbacks
             this.clickHandler = onClick
+            this.clickInterceptor = onAdClick
+            this.placement = placement
+            this.adContext = adContext
             this.isSetup = true
 
-            Logger.d("Setting up SponsoredDisplayView with config: $sponsoredDisplayConfig")
+            Logger.d("Setting up SponsoredDisplayView for placement ${placement.placementId}")
 
             try {
-                showLoading()
-
-                val placements = buildPlacements(sponsoredDisplayConfig)
-                val sdk = GowitSdk.shared
-
-                val response = sdk.getAds(placements, 1, sessionId ?: this.sessionId)
-                handleAdResponse(response.placements?.firstOrNull()?.ads?.firstOrNull())
+                this.sessionId = sessionId
+                    ?: adContext?.sessionId
+                    ?: GowitSdk.shared.defaultContext?.sessionId
+                    ?: this.sessionId
             } catch (e: Exception) {
                 Logger.e("Error setting up SponsoredDisplayView", e)
                 handleError(GowitException.ConfigurationException("Failed to setup sponsored display: ${e.message}"))
+                return
             }
+
+            loadAd()
+        }
+
+        /**
+         * Setup the sponsored display view for a placement (lifecycle-aware version).
+         */
+        fun setup(
+            lifecycleOwner: LifecycleOwner,
+            placement: PlacementRequest,
+            adContext: AdContext? = null,
+            sessionId: String? = null,
+            onClick: SponsoredDisplayClickHandler? = null,
+            onAdClick: SponsoredDisplayClickInterceptor? = null,
+            callbacks: SponsoredDisplayCallbacks? = null,
+        ) {
+            lifecycleOwner.lifecycleScope.launch {
+                setup(placement, adContext, sessionId, onClick, onAdClick, callbacks)
+            }
+        }
+
+        /**
+         * Setup the sponsored display view with configuration
+         */
+        @Deprecated(
+            "Use setup(placement, adContext, ...) to pass customer, language, location and page context.",
+            ReplaceWith(
+                "setup(PlacementRequest(placementId), AdContext(customer = Customer(customerId = customerId)), sessionId, onClick)",
+            ),
+        )
+        suspend fun setup(
+            sponsoredDisplayConfig: SponsoredDisplayConfig,
+            customerId: String? = null,
+            sessionId: String? = null,
+            onClick: SponsoredDisplayClickHandler? = null,
+            callbacks: SponsoredDisplayCallbacks? = null,
+        ) {
+            Logger.d("Setting up SponsoredDisplayView with config: $sponsoredDisplayConfig")
+            val locationId = (sponsoredDisplayConfig as? SponsoredDisplayConfig.CustomPlacement)?.locationId
+            val adContext =
+                AdContext(
+                    customer = customerId?.let { Customer(customerId = it) },
+                    locationId = locationId,
+                )
+            setup(
+                placement = buildPlacements(sponsoredDisplayConfig).first(),
+                adContext = adContext,
+                sessionId = sessionId,
+                onClick = onClick,
+                callbacks = callbacks,
+            )
         }
 
         /**
          * Setup the sponsored display view (lifecycle-aware version)
          */
+        @Deprecated(
+            "Use setup(lifecycleOwner, placement, adContext, ...) to pass customer, language, location and page context.",
+        )
         fun setup(
             lifecycleOwner: LifecycleOwner,
             sponsoredDisplayConfig: SponsoredDisplayConfig,
@@ -147,7 +217,20 @@ class SponsoredDisplayView
             callbacks: SponsoredDisplayCallbacks? = null,
         ) {
             lifecycleOwner.lifecycleScope.launch {
+                @Suppress("DEPRECATION")
                 setup(sponsoredDisplayConfig, customerId, sessionId, onClick, callbacks)
+            }
+        }
+
+        private suspend fun loadAd() {
+            val placement = placement ?: return
+            try {
+                showLoading()
+                val response = GowitSdk.shared.getAds(placement, adContext, sessionId)
+                handleAdResponse(response.getAds(placement.placementId)?.firstOrNull())
+            } catch (e: Exception) {
+                Logger.e("Error loading sponsored display", e)
+                handleError(GowitException.ConfigurationException("Failed to setup sponsored display: ${e.message}"))
             }
         }
 
@@ -337,8 +420,14 @@ class SponsoredDisplayView
                 clickHandler?.invoke(adId, ad.advertiserId ?: "")
             }
 
+            val destinationUrl = ad.redirect?.url
+            if (clickInterceptor?.invoke(ad, destinationUrl) == true) {
+                Logger.d("Sponsored display click handled by the app")
+                return
+            }
+
             // Handle redirect if available
-            ad.redirect?.url?.let { url ->
+            destinationUrl?.let { url ->
                 try {
                     val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                     context.startActivity(intent)
@@ -430,7 +519,7 @@ class SponsoredDisplayView
         fun getSessionId(): String = sessionId
 
         /**
-         * Refresh the sponsored display with the same configuration
+         * Request a new ad for the same placement, context and session.
          */
         suspend fun refresh() {
             if (!isSetup) {
@@ -438,14 +527,7 @@ class SponsoredDisplayView
                 return
             }
 
-            // Generate new session ID for refresh
-            sessionId = UUID.randomUUID().toString()
-
-            // Clear current state
             currentAd = null
-
-            // You would need to store the original config to refresh
-            // For now, just show a message
-            Logger.d("Sponsored display refresh requested - implement config storage for full refresh support")
+            loadAd()
         }
     }
