@@ -24,6 +24,7 @@ internal class HttpClient(private val config: GowitConfig) {
                 .connectTimeout(config.timeoutSeconds, TimeUnit.SECONDS)
                 .readTimeout(config.timeoutSeconds, TimeUnit.SECONDS)
                 .writeTimeout(config.timeoutSeconds, TimeUnit.SECONDS)
+                .addInterceptor(UserAgent.Interceptor())
 
         if (config.enableLogging) {
             val loggingInterceptor =
