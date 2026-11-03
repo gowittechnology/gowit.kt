@@ -19,3 +19,23 @@ data class Customer(
     val segments: List<String>? = null,
     val userAgent: String? = null,
 ) : Parcelable
+
+/**
+ * Merges two customers field by field; non-null values of the receiver win over [base].
+ */
+fun Customer?.mergedOver(base: Customer?): Customer? {
+    if (this == null) return base
+    if (base == null) return this
+    return Customer(
+        id = id ?: base.id,
+        customerId = customerId ?: base.customerId,
+        gender = gender ?: base.gender,
+        age = age ?: base.age,
+        city = city ?: base.city,
+        deviceType = deviceType ?: base.deviceType,
+        environmentType = environmentType ?: base.environmentType,
+        ip = ip ?: base.ip,
+        segments = segments ?: base.segments,
+        userAgent = userAgent ?: base.userAgent,
+    )
+}

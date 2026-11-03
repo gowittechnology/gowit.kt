@@ -7,6 +7,7 @@ Kotlin SDK for integrating Gowit's advertising platform into Android application
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Ad Requests](#ad-requests)
+- [Request Context & SponsoredDisplayView](#request-context--sponsoreddisplayview)
 - [Event Reporting](#event-reporting)
 - [Error Handling](#error-handling)
 - [Best Practices](#best-practices)
@@ -20,7 +21,7 @@ Add the dependency to your app's `build.gradle` file:
 
 ```kotlin
 dependencies {
-    implementation("com.github.gowittechnology:gowit.kt:1.0.5")
+    implementation("com.github.gowittechnology:gowit.kt:1.1.0")
 }
 ```
 
@@ -208,6 +209,57 @@ val placements = listOf(
     )
 )
 ```
+
+## Request Context & SponsoredDisplayView
+
+`AdContext` carries everything a request sends besides the placement: `customer`, `language`,
+`locationId`, `regionId`, `search`, `category`, `categoryId`, `products`, `filters`, `pageNumber`
+and `sessionId`.
+
+### Default context
+
+Set it once (e.g. after login or a language change); it applies to every request and every
+`SponsoredDisplayView`:
+
+```kotlin
+Gowit.shared.setDefaultContext(
+    AdContext(
+        customer = Customer(customerId = "42", city = "Riyadh", deviceType = "MOBILE"),
+        language = "AR",
+        regionId = "1",
+        sessionId = session.id,
+    )
+)
+```
+
+Merge rules: values of a more specific context win, `customer` is merged field by field, and
+lists (`products`, `filters`, `segments`) are replaced.
+
+### SponsoredDisplayView
+
+The view requests, renders and tracks the ad (impression and click):
+
+```kotlin
+binding.banner.setup(
+    lifecycleOwner = viewLifecycleOwner,
+    placement = PlacementRequest(placementId = 8, maxAds = 1),
+    adContext = AdContext(category = "Burgers"), // merged over the default context
+    onAdClick = { ad, destinationUrl ->
+        router.openAdDestination(destinationUrl) // return true: the app handled navigation
+        true
+    },
+    callbacks = SponsoredDisplayCallbacks(
+        onNoAds = { binding.banner.isVisible = false },
+        onError = { binding.banner.isVisible = false },
+    ),
+)
+```
+
+- `sessionId` resolves as: `setup` argument → `adContext.sessionId` → default context → generated.
+- `onAdClick` returns `true` when the app handled navigation; `false` (or no handler) opens the
+  destination URL with `ACTION_VIEW`. The click event is recorded either way.
+- The same context works with requests: `Gowit.shared.getAds(placement, adContext)` or
+  `AdRequestBuilder(...).with(adContext)`.
 
 ## Event Reporting
 

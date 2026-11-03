@@ -6,13 +6,13 @@ import com.gowit.sdk.core.GowitConfig
 import com.gowit.sdk.core.GowitException
 import com.gowit.sdk.core.Logger
 import com.gowit.sdk.model.Ad
+import com.gowit.sdk.model.AdContext
 import com.gowit.sdk.model.AdRequest
 import com.gowit.sdk.model.AdRequestBuilder
 import com.gowit.sdk.model.AdResponse
 import com.gowit.sdk.model.EventRequest
 import com.gowit.sdk.model.EventType
 import com.gowit.sdk.model.PlacementRequest
-import com.gowit.sdk.model.Product
 import com.gowit.sdk.model.Sale
 import com.gowit.sdk.service.AdsService
 import com.gowit.sdk.service.EventsService
@@ -91,19 +91,25 @@ class GowitSdk private constructor(
         sessionId: String?,
     ): AdResponse {
         ensureConfigured()
+        val context = AdContext(pageNumber = pageNumber, sessionId = sessionId).mergedOver(defaultContext)
+        return execute(buildRequest(placements, context))
+    }
 
-        val request =
-            AdRequest(
-                marketplaceId = marketplaceId,
-                placements = placements,
-                sessionId = sessionId ?: UUID.randomUUID().toString(),
-                pageNumber = pageNumber,
-            )
-
-        return when (val result = adsService.getAds(request)) {
-            is ApiResult.Success -> result.data
-            is ApiResult.Error -> throw result.exception
-        }
+    /**
+     * Request ads for a single placement with an optional [AdContext].
+     * The context is merged over [defaultContext]; an explicit [sessionId] wins over both.
+     */
+    suspend fun getAds(
+        placement: PlacementRequest,
+        adContext: AdContext? = null,
+        sessionId: String? = null,
+    ): AdResponse {
+        ensureConfigured()
+        val context =
+            AdContext(sessionId = sessionId)
+                .mergedOver(adContext ?: AdContext())
+                .mergedOver(defaultContext)
+        return execute(buildRequest(listOf(placement), context))
     }
 
     /**
@@ -123,36 +129,54 @@ class GowitSdk private constructor(
      */
     override suspend fun getAds(builder: AdRequestBuilder): AdResponse {
         ensureConfigured()
+        val context = builder.toAdContext().mergedOver(defaultContext)
+        return execute(buildRequest(builder.placements, context, builder.maxAds))
+    }
 
-        // Convert ProductRequest to Product if needed
-        val products =
-            builder.products?.map { productReq ->
-                Product(id = productReq.productId, category = productReq.category)
-            }
+    // MARK: - Default Context
 
-        // Create AdRequest with all builder parameters
-        val request =
-            AdRequest(
-                marketplaceId = marketplaceId,
-                placements = builder.placements,
-                sessionId = builder.sessionId ?: UUID.randomUUID().toString(),
-                customer = builder.customer,
-                products = products,
-                search = builder.search,
-                category = builder.category,
-                categoryId = builder.categoryId,
-                maxAds = builder.maxAds,
-                filters = builder.filters,
-                pageNumber = builder.pageNumber,
-                locationId = builder.locationId,
-                regionId = builder.regionId,
-            )
+    /**
+     * App-wide context applied to every ad request and sponsored display view.
+     * Per-request values override it; the customer is merged field by field.
+     */
+    @Volatile
+    var defaultContext: AdContext? = null
+        private set
 
-        return when (val result = adsService.getAds(request)) {
+    /**
+     * Set (or clear with `null`) the app-wide [AdContext], e.g. after login or a language change.
+     */
+    fun setDefaultContext(context: AdContext?) {
+        defaultContext = context
+    }
+
+    internal fun buildRequest(
+        placements: List<PlacementRequest>,
+        context: AdContext,
+        maxAds: Int? = null,
+    ): AdRequest =
+        AdRequest(
+            marketplaceId = marketplaceId,
+            placements = placements,
+            sessionId = context.sessionId ?: UUID.randomUUID().toString(),
+            customer = context.customer,
+            products = context.products,
+            search = context.search,
+            category = context.category,
+            categoryId = context.categoryId,
+            maxAds = maxAds,
+            filters = context.filters,
+            pageNumber = context.pageNumber,
+            locationId = context.locationId,
+            regionId = context.regionId,
+            language = context.language,
+        )
+
+    private suspend fun execute(request: AdRequest): AdResponse =
+        when (val result = adsService.getAds(request)) {
             is ApiResult.Success -> result.data
             is ApiResult.Error -> throw result.exception
         }
-    }
 
     // MARK: - Event Reporting Methods
 
