@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Click interception: `onAdClick: (ad, destinationUrl) -> Boolean`. Return `true` to handle
   navigation in the app; `false` keeps the default behavior (open the URL with `ACTION_VIEW`).
   The click event is recorded in both cases.
+- Every SDK request now sends a `User-Agent` header identifying the SDK, its version and the
+  Android version, e.g. `gowit-kt/1.1.0 (Android 14; API 34)`. Previously the default
+  `okhttp/<version>` was sent.
 - `AdRequestBuilder.withLanguage(...)` and `AdRequestBuilder.with(context)`.
 - `Product.categories` and `Product.categoryIdStructures` (also on `ProductRequest`) for
   products that belong to several categories.
