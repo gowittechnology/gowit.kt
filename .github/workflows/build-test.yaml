@@ -1,0 +1,61 @@
+name: build-test
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+concurrency:
+  group: build-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    # A GitHub-hosted runner is used because an Android build needs the Android SDK, and this is the
+    # only place in the project that has one: the authoring machine's platform directory is empty and
+    # its JDK is past the one this build supports, so continuous integration is the first compiler
+    # this branch meets.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # 17 is what build.gradle compiles to (sourceCompatibility, targetCompatibility, jvmTarget)
+          # and what jitpack.yml builds the published artifact with.
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Print toolchain
+        run: |
+          java -version
+          ./gradlew --version
+          echo "ANDROID_HOME=${ANDROID_HOME}"
+
+      - name: Assemble the library
+        run: ./gradlew --no-daemon assemble
+
+      - name: Run unit tests
+        run: ./gradlew --no-daemon test
+
+      # Compiled, not run: there is no emulator job in this repository yet, so this step proves the
+      # instrumented example type-checks against the Android SDK. Running it needs a device.
+      - name: Compile the instrumented example
+        run: ./gradlew --no-daemon assembleDebugAndroidTest
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-test-reports
+          path: |
+            build/reports/tests/
+            build/test-results/
+          if-no-files-found: ignore
